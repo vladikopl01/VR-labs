@@ -35,11 +35,11 @@ let nearRange;
 // Convergence
 let convergenceRange;
 
-// let tex;
-// let tex1;
-// let video;
-// let track;
-// let background;
+let tex;
+let tex1;
+let video;
+let track;
+let background;
 
 // Constant values for slope angle range
 const MAX_SLOPE_ANGLE = 2 * Math.PI;
@@ -206,6 +206,38 @@ function ShaderProgram(name, program) {
   };
 }
 
+function leftFrustum(stereoCamera) {
+  const { eyeSeparation, fov, near, far, convergence, aspectRatio } =
+    stereoCamera;
+  const top = near * Math.tan(fov / 2);
+  const bottom = -top;
+
+  const a = aspectRatio * Math.tan(fov / 2) * convergence;
+  const b = a - eyeSeparation / 2;
+  const c = a + eyeSeparation / 2;
+
+  const left = (-b * near) / convergence;
+  const right = (c * near) / convergence;
+
+  return m4.frustum(left, right, bottom, top, near, far);
+}
+
+function rightFrustum(stereoCamera) {
+  const { eyeSeparation, fov, near, far, convergence, aspectRatio } =
+    stereoCamera;
+  const top = near * Math.tan(fov / 2);
+  const bottom = -top;
+
+  const a = aspectRatio * Math.tan(fov / 2) * convergence;
+  const b = a - eyeSeparation / 2;
+  const c = a + eyeSeparation / 2;
+
+  const left = (-c * near) / convergence;
+  const right = (b * near) / convergence;
+
+  return m4.frustum(left, right, bottom, top, near, far);
+}
+
 function draw() {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -213,20 +245,63 @@ function draw() {
   /* Set the values of the projection transformation */
   let projection = m4.perspective(Math.PI / 10, 1, 1, 1000);
 
+  let stereoCamera = {
+    convergence: convergenceRange.value,
+    eyeSeparation: eyeSeparationRange.value,
+    fov: deg2rad(fovRange.value),
+    near: nearRange.value,
+    aspectRatio: gl.canvas.width / gl.canvas.height,
+  };
+
+  let top = stereoCamera.near * Math.tan(stereoCamera.fov / 2);
+  let bottom = -top;
+
+  let a =
+    stereoCamera.aspectRatio *
+    Math.tan(stereoCamera.fov / 2) *
+    stereoCamera.convergence;
+  let b = a - stereoCamera.eyeSeparation / 2;
+  let c = a + stereoCamera.eyeSeparation / 2;
+
+  let left = (-b * stereoCamera.near) / stereoCamera.convergence;
+  let right = (c * stereoCamera.near) / stereoCamera.convergence;
+
+  let leftProjection = m4.frustum(
+    left,
+    right,
+    bottom,
+    top,
+    stereoCamera.near,
+    1000
+  );
+
+  left = (-c * stereoCamera.near) / stereoCamera.convergence;
+  right = (b * stereoCamera.near) / stereoCamera.convergence;
+
+  let rightProjection = m4.frustum(
+    left,
+    right,
+    bottom,
+    top,
+    stereoCamera.near,
+    1000
+  );
+
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
 
   let rotateToPointZero = m4.axisRotation([1, 0, 1], -Math.PI / 3);
   let translateToPointZero = m4.translation(0, 0, zoomRange.value);
 
-  let matAccum0 = m4.multiply(rotateToPointZero, modelView);
-  let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
+  let matAccum = m4.multiply(rotateToPointZero, modelView);
+  let noRot = m4.multiply(
+    rotateToPointZero,
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+  );
+  let matAccum1 = m4.multiply(translateToPointZero, noRot);
+  let modelViewProjection = m4.multiply(projection, matAccum1);
   const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
   const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
-
-  /* Multiply the projection matrix times the modelview matrix to give the
-       combined transformation matrix, and send that to the shader program. */
-  let modelViewProjection = m4.multiply(projection, matAccum1);
 
   gl.uniformMatrix4fv(
     shProgram.iModelViewProjectionMatrix,
@@ -256,14 +331,34 @@ function draw() {
     getX(0, u, v, slopeAngleRange.value, radiusRange.value, 1, 1),
     getY(0, u, v, slopeAngleRange.value, radiusRange.value, 1, 1),
   ]);
+  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, noRot);
+  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projection);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+  background.DrawBG();
+  gl.uniform4fv(shProgram.iColor, [0, 0, 0, 1]);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.uniform1i(shProgram.iTextureU, 0);
 
-  console.log("Texture point: ", TEXTURE_POINT);
-  console.log("Rotation angle: ", rotationAngleRange.value);
+  gl.bindTexture(gl.TEXTURE_2D, tex1);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
 
+  let matAccumLeft = m4.multiply(translateToLeft, matAccum);
+  let matAccumRight = m4.multiply(translateToRight, matAccum);
+  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumLeft);
+  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionLeft);
+  gl.colorMask(true, false, false, false);
   surface.Draw();
+
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+
+  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumRight);
+  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionRight);
+  gl.colorMask(false, true, true, false);
+  surface.Draw();
+
+  gl.colorMask(true, true, true, true);
 }
 
 // Creates vertex list of the Surface
@@ -355,21 +450,35 @@ function initGL() {
 
   shProgram.iShininess = gl.getUniformLocation(prog, "shininess");
 
-  shProgram.iLightPos = gl.getUniformLocation(prog, "lightPosition");
+  shProgram.iLightPosition = gl.getUniformLocation(prog, "lightPosition");
   shProgram.iLightVec = gl.getUniformLocation(prog, "lightVec");
 
   shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
   shProgram.iTextureU = gl.getUniformLocation(prog, "textureU");
   shProgram.iTextureAngle = gl.getUniformLocation(prog, "textureAngle");
-  shProgram.iTextureCoords = gl.getUniformLocation(prog, "texturePoint");
+  shProgram.iTexturePoint = gl.getUniformLocation(prog, "texturePoint");
 
   surface = new Model("Surface");
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(vertexList, textureList);
 
+  background = new Model("Back");
+  background.BufferData(
+    [
+      0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0,
+    ],
+    [1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1]
+  );
+
   loadTexture();
 
   gl.enable(gl.DEPTH_TEST);
+}
+
+function continuousDraw() {
+  draw();
+  window.requestAnimationFrame(continuousDraw);
 }
 
 /* Creates a program for use in the WebGL context gl, and returns the
@@ -514,6 +623,11 @@ function init() {
   try {
     canvas = document.getElementById("webglcanvas");
     gl = canvas.getContext("webgl");
+    video = document.createElement("video");
+    video.setAttribute("autoplay", true);
+    window.vid = video;
+    getWebcam();
+    tex = CreateWebCamTexture();
     if (!gl) {
       throw "Browser does not support WebGL";
     }
@@ -534,7 +648,8 @@ function init() {
 
   spaceball = new TrackballRotator(canvas, draw, 0);
 
-  draw();
+  // draw();
+  continuousDraw();
 }
 
 function reDraw() {
@@ -555,7 +670,7 @@ function loadTexture() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    draw();
+    // draw();
   });
 }
 
@@ -748,4 +863,27 @@ function lightCoordinates() {
   let y = 0;
   let z = radius * Math.sin(angle);
   return [x, y, z];
+}
+
+function getWebcam() {
+  navigator.getUserMedia(
+    { video: true, audio: false },
+    function (stream) {
+      video.srcObject = stream;
+      track = stream.getTracks()[0];
+    },
+    function (error) {
+      console.log("Webcam error: ", error);
+    }
+  );
+}
+
+function CreateWebCamTexture() {
+  let textureID = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, textureID);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return textureID;
 }
