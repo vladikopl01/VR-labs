@@ -27,13 +27,13 @@ let texturePointXRange;
 let texturePointYRange;
 
 // Eye separation
-let eyeSeparation;
+let eyeSeparationRange;
 // Field of view
-let fov;
+let fovRange;
 // Near clipping distance
-let near;
+let nearRange;
 // Convergence
-let convergence;
+let convergenceRange;
 
 // let tex;
 // let tex1;
@@ -128,16 +128,12 @@ function Model(name) {
   this.iTextureBuffer = gl.createBuffer();
   this.count = 0;
 
-  this.BufferData = function (vertices, textureList) {
+  this.BufferData = function (vertices, textures) {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(textureList),
-      gl.STREAM_DRAW
-    );
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STREAM_DRAW);
 
     gl.enableVertexAttribArray(shProgram.iTextureCoords);
     gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
@@ -153,9 +149,6 @@ function Model(name) {
     gl.vertexAttribPointer(shProgram.iNormal, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iNormal);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
-    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iTextureCoords);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
   };
 
@@ -201,12 +194,12 @@ function ShaderProgram(name, program) {
 
   // Texture coordinates
   this.iTextureCoords = -1;
-  this.iTMU = -1;
+  this.iTextureU = -1;
+  this.iTextureAngle = -1;
+  this.iTexturePoint = -1;
 
-  this.iFAngleRad = -1;
-  this.iFUserPoint = -1;
-
-  // this.iTextureAngle = -1;
+  // this.iFAngleRad = -1;
+  // this.iFUserPoint = -1;
 
   this.Use = function () {
     gl.useProgram(this.prog);
@@ -214,16 +207,11 @@ function ShaderProgram(name, program) {
 }
 
 function draw() {
-  let D = document;
-  let spans = D.getElementsByTagName("sliderValue");
-
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   /* Set the values of the projection transformation */
   let projection = m4.perspective(Math.PI / 10, 1, 1, 1000);
-
-  let conv, eyes, ratio, fov;
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
@@ -371,7 +359,7 @@ function initGL() {
   shProgram.iLightVec = gl.getUniformLocation(prog, "lightVec");
 
   shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
-  shProgram.iTMU = gl.getUniformLocation(prog, "textureU");
+  shProgram.iTextureU = gl.getUniformLocation(prog, "textureU");
   shProgram.iTextureAngle = gl.getUniformLocation(prog, "textureAngle");
   shProgram.iTextureCoords = gl.getUniformLocation(prog, "texturePoint");
 
