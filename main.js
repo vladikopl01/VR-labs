@@ -35,6 +35,8 @@ let nearRange;
 // Convergence
 let convRange;
 
+let stereoCamera;
+
 let tex;
 let tex1;
 let video;
@@ -84,10 +86,10 @@ const MIN_EYE_SEPARATION = 0.0;
 const STEP_EYE_SEPARATION = 1;
 const DEFAULT_EYE_SEPARATION = 70;
 // Constant values of field of view
-const MAX_FOV = 3;
-const MIN_FOV = 2;
-const STEP_FOV = 0.05;
-const DEFAULT_FOV = 2.2;
+const MAX_FOV = 100;
+const MIN_FOV = -100;
+const STEP_FOV = 1;
+const DEFAULT_FOV = 10;
 // Constant values of near clipping distance
 const MAX_NEAR = 20;
 const MIN_NEAR = 0;
@@ -147,6 +149,17 @@ function Model(name) {
     this.count = vertices.length / 3;
   };
 
+  // this.Draw = function () {
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
+  //   gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
+  //   gl.enableVertexAttribArray(shProgram.iAttribVertex);
+
+  //   gl.vertexAttribPointer(shProgram.iNormal, 3, gl.FLOAT, false, 0, 0);
+  //   gl.enableVertexAttribArray(shProgram.iNormal);
+
+  //   gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
+  // };
+
   this.Draw = function () {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
     gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
@@ -163,9 +176,6 @@ function Model(name) {
     gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iAttribVertex);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
-    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iTextureCoords);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
   };
 }
@@ -204,77 +214,61 @@ function ShaderProgram(name, program) {
   this.iTextureAngle = -1;
   this.iTexturePoint = -1;
 
-  // this.iFAngleRad = -1;
-  // this.iFUserPoint = -1;
-
   this.Use = function () {
     gl.useProgram(this.prog);
   };
 }
 
-function leftFrustum(stereoCamera) {
-  const { eyeSeparation, fov, near, far, convergence, aspectRatio } = stereoCamera;
-  const top = near * Math.tan(fov / 2);
+function leftProjection(stereoCamera) {
+  const { conv, eyeSep, ratio, fov, near, far } = stereoCamera;
+
+  const top = near * Math.tan(fov / 2.0);
   const bottom = -top;
 
-  const a = aspectRatio * Math.tan(fov / 2) * convergence;
-  const b = a - eyeSeparation / 2;
-  const c = a + eyeSeparation / 2;
+  const a = ratio * Math.tan(fov / 2.0) * conv;
+  const b = a - eyeSep / 2.0;
+  const c = a + eyeSep / 2.0;
 
-  const left = (-b * near) / convergence;
-  const right = (c * near) / convergence;
+  const left = (-b * near) / conv;
+  const right = (c * near) / conv;
 
   return m4.frustum(left, right, bottom, top, near, far);
 }
 
-function rightFrustum(stereoCamera) {
-  const { eyeSeparation, fov, near, far, convergence, aspectRatio } = stereoCamera;
-  const top = near * Math.tan(fov / 2);
+function rightProjection(stereoCamera) {
+  const { conv, eyeSep, ratio, fov, near, far } = stereoCamera;
+
+  const top = near * Math.tan(fov / 2.0);
   const bottom = -top;
 
-  const a = aspectRatio * Math.tan(fov / 2) * convergence;
-  const b = a - eyeSeparation / 2;
-  const c = a + eyeSeparation / 2;
+  const a = ratio * Math.tan(fov / 2.0) * conv;
+  const b = a - eyeSep / 2.0;
+  const c = a + eyeSep / 2.0;
 
-  const left = (-c * near) / convergence;
-  const right = (b * near) / convergence;
+  const left = (-c * near) / conv;
+  const right = (b * near) / conv;
 
   return m4.frustum(left, right, bottom, top, near, far);
 }
 
-function draw() {
-  gl.clearColor(0, 0, 0, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  /* Set the values of the projection transformation */
-  let projection = m4.perspective(Math.PI / 10, 1, 1, 1000);
-
-  let stereoCamera = {
-    convergence: convRange.value,
-    eyeSeparation: eyeSepRange.value,
-    fov: deg2rad(fovRange.value),
-    near: nearRange.value,
-    aspectRatio: gl.canvas.width / gl.canvas.height,
-    far: 1000,
-  };
-
-  let leftProjection = leftFrustum(stereoCamera);
-  let rightProjection = rightFrustum(stereoCamera);
+function drawLeft() {
+  // Set the values of the projection transformation
+  let projection = leftProjection(stereoCamera);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
 
   let rotateToPointZero = m4.axisRotation([1, 0, 1], -Math.PI / 3);
   let translateToPointZero = m4.translation(0, 0, zoomRange.value);
-  let translateToLeft = m4.translation(-0.03, 0, -20);
-  let translateToRight = m4.translation(0.03, 0, -20);
 
-  let matAccum = m4.multiply(rotateToPointZero, modelView);
-  let noRot = m4.multiply(rotateToPointZero, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-  let matAccum1 = m4.multiply(translateToPointZero, noRot);
-  let modelViewProjection = m4.multiply(projection, matAccum1);
+  let matAccum0 = m4.multiply(rotateToPointZero, modelView);
+  let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
   const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
   const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
+
+  /* Multiply the projection matrix times the modelview matrix to give the
+         combined transformation matrix, and send that to the shader program. */
+  let modelViewProjection = m4.multiply(projection, matAccum1);
 
   gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
   gl.uniformMatrix4fv(shProgram.iNormalMatrix, false, normalMatrix);
@@ -288,7 +282,8 @@ function draw() {
   gl.uniform3fv(shProgram.iDiffuseColor, [1, 1, 1]);
   gl.uniform3fv(shProgram.iSpecularColor, [1, 1, 1]);
 
-  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 1]);
+  /* Draw the six faces of a cube, with different colors. */
+  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 0]);
 
   gl.uniform1f(shProgram.iTextureAngle, rotAngleRange.value);
 
@@ -299,34 +294,71 @@ function draw() {
     getX(0, u, v, slopeAngleRange.value, radiusRange.value, 1, 1),
     getY(0, u, v, slopeAngleRange.value, radiusRange.value, 1, 1),
   ]);
-  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, noRot);
-  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projection);
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
-  background.DrawBG();
-  gl.uniform4fv(shProgram.iColor, [0, 0, 0, 1]);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.uniform1i(shProgram.iTextureU, 0);
-
-  gl.bindTexture(gl.TEXTURE_2D, tex1);
-  gl.clear(gl.DEPTH_BUFFER_BIT);
-
-  let matAccumLeft = m4.multiply(translateToLeft, matAccum);
-  let matAccumRight = m4.multiply(translateToRight, matAccum);
-  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumLeft);
-  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionLeft);
-  gl.colorMask(true, false, false, false);
   surface.Draw();
+}
 
-  gl.clear(gl.DEPTH_BUFFER_BIT);
+function drawRight() {
+  // Set the values of the projection transformation
+  let projection = rightProjection(stereoCamera);
 
-  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumRight);
-  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionRight);
-  gl.colorMask(false, true, true, false);
+  /* Get the view matrix from the SimpleRotator object.*/
+  let modelView = spaceball.getViewMatrix();
+
+  let rotateToPointZero = m4.axisRotation([1, 0, 1], -Math.PI / 3);
+  let translateToPointZero = m4.translation(0, 0, zoomRange.value);
+
+  let matAccum0 = m4.multiply(rotateToPointZero, modelView);
+  let matAccum1 = m4.multiply(translateToPointZero, matAccum0);
+  const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
+  const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
+
+  /* Multiply the projection matrix times the modelview matrix to give the
+         combined transformation matrix, and send that to the shader program. */
+  let modelViewProjection = m4.multiply(projection, matAccum1);
+
+  gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
+  gl.uniformMatrix4fv(shProgram.iNormalMatrix, false, normalMatrix);
+
+  gl.uniform3fv(shProgram.iLightPosition, lightCoordinates());
+  gl.uniform3fv(shProgram.iLightDirection, [1, 0, 0]);
+  gl.uniform3fv(shProgram.iLightVec, new Float32Array(3));
+  gl.uniform1f(shProgram.iShininess, 1.0);
+
+  gl.uniform3fv(shProgram.iAmbientColor, [1, 1, 1]);
+  gl.uniform3fv(shProgram.iDiffuseColor, [1, 1, 1]);
+  gl.uniform3fv(shProgram.iSpecularColor, [1, 1, 1]);
+
+  /* Draw the six faces of a cube, with different colors. */
+  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 0]);
+
+  gl.uniform1f(shProgram.iTextureAngle, rotAngleRange.value);
+
+  const u = TEXTURE_POINT.x;
+  const v = TEXTURE_POINT.y;
+
+  gl.uniform2fv(shProgram.iTexturePoint, [
+    getX(0, u, v, slopeAngleRange.value, radiusRange.value, 1, 1),
+    getY(0, u, v, slopeAngleRange.value, radiusRange.value, 1, 1),
+  ]);
+
+  gl.activeTexture(gl.TEXTURE0);
+  gl.uniform1i(shProgram.iTextureU, 0);
   surface.Draw();
+}
 
-  gl.colorMask(true, true, true, true);
+function draw() {
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); //
+
+  gl.colorMask(true, false, false, true);
+  drawLeft();
+
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.colorMask(false, true, true, true);
+  drawRight();
 }
 
 // Creates vertex list of the Surface
@@ -405,6 +437,7 @@ function initGL() {
   shProgram.iAmbientColor = gl.getUniformLocation(prog, "ambientColor");
   shProgram.iDiffuseColor = gl.getUniformLocation(prog, "diffuseColor");
   shProgram.iSpecularColor = gl.getUniformLocation(prog, "specularColor");
+  shProgram.iColor = gl.getUniformLocation(prog, "colorU");
 
   shProgram.iShininess = gl.getUniformLocation(prog, "shininess");
 
@@ -426,14 +459,18 @@ function initGL() {
     [1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1]
   );
 
+  stereoCamera = {
+    eyeSep: eyeSepRange.value,
+    conv: convRange.value,
+    ratio: gl.canvas.width / gl.canvas.height,
+    fov: fovRange.value,
+    near: nearRange.value,
+    far: 20,
+  };
+
   loadTexture();
 
   gl.enable(gl.DEPTH_TEST);
-}
-
-function continuousDraw() {
-  draw();
-  window.requestAnimationFrame(continuousDraw);
 }
 
 /* Creates a program for use in the WebGL context gl, and returns the
@@ -607,6 +644,11 @@ function init() {
   continuousDraw();
 }
 
+function continuousDraw() {
+  draw();
+  window.requestAnimationFrame(continuousDraw);
+}
+
 function reDraw() {
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(vertexList, textureList);
@@ -616,7 +658,7 @@ function reDraw() {
 function loadTexture() {
   const image = new Image();
   image.crossOrigin = "anonymous";
-  image.src = "https://www.the3rdsequence.com/texturedb/thumbnail/5/512/dark+wood.jpg";
+  image.src = `https://www.the3rdsequence.com/texturedb/download/116/texture/jpg/1024/irregular+wood+planks-1024x1024.jpg`;
 
   image.addEventListener("load", function () {
     tex1 = gl.createTexture();
@@ -673,7 +715,7 @@ function UpdateRotAngle() {
 // Updates texture when texture point x coordinate is changes
 function UpdateTexPointX() {
   TEXTURE_POINT.x = Number(texPointXRange.value);
-  let texturePointXValueSpan = document.getElementById("TexturePointXValue");
+  let texturePointXValueSpan = document.getElementById("TexPointXValue");
   texturePointXValueSpan.innerHTML = texPointXRange.value;
   reDraw();
 }
@@ -681,14 +723,14 @@ function UpdateTexPointX() {
 // Updates texture when texture point y coordinate is changes
 function UpdateTexPointY() {
   TEXTURE_POINT.y = Number(texPointYRange.value);
-  let texturePointYValueSpan = document.getElementById("TexturePointYValue");
+  let texturePointYValueSpan = document.getElementById("TexPointYValue");
   texturePointYValueSpan.innerHTML = texPointYRange.value;
   reDraw();
 }
 
 // Updates when eye separation range is changed
 function UpdateEyeSep() {
-  let eyeSeparationValueSpan = document.getElementById("EyeSeparationValue");
+  let eyeSeparationValueSpan = document.getElementById("EyeSepValue");
   eyeSeparationValueSpan.innerHTML = eyeSepRange.value;
   reDraw();
 }
