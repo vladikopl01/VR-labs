@@ -213,8 +213,7 @@ function ShaderProgram(name, program) {
 }
 
 function leftFrustum(stereoCamera) {
-  const { eyeSeparation, fov, near, far, convergence, aspectRatio } =
-    stereoCamera;
+  const { eyeSeparation, fov, near, far, convergence, aspectRatio } = stereoCamera;
   const top = near * Math.tan(fov / 2);
   const bottom = -top;
 
@@ -229,8 +228,7 @@ function leftFrustum(stereoCamera) {
 }
 
 function rightFrustum(stereoCamera) {
-  const { eyeSeparation, fov, near, far, convergence, aspectRatio } =
-    stereoCamera;
+  const { eyeSeparation, fov, near, far, convergence, aspectRatio } = stereoCamera;
   const top = near * Math.tan(fov / 2);
   const bottom = -top;
 
@@ -272,20 +270,13 @@ function draw() {
   let translateToRight = m4.translation(0.03, 0, -20);
 
   let matAccum = m4.multiply(rotateToPointZero, modelView);
-  let noRot = m4.multiply(
-    rotateToPointZero,
-    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-  );
+  let noRot = m4.multiply(rotateToPointZero, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   let matAccum1 = m4.multiply(translateToPointZero, noRot);
   let modelViewProjection = m4.multiply(projection, matAccum1);
   const modelViewInverse = m4.inverse(matAccum1, new Float32Array(16));
   const normalMatrix = m4.transpose(modelViewInverse, new Float32Array(16));
 
-  gl.uniformMatrix4fv(
-    shProgram.iModelViewProjectionMatrix,
-    false,
-    modelViewProjection
-  );
+  gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
   gl.uniformMatrix4fv(shProgram.iNormalMatrix, false, normalMatrix);
 
   gl.uniform3fv(shProgram.iLightPosition, lightCoordinates());
@@ -297,8 +288,7 @@ function draw() {
   gl.uniform3fv(shProgram.iDiffuseColor, [1, 1, 1]);
   gl.uniform3fv(shProgram.iSpecularColor, [1, 1, 1]);
 
-  /* Draw the six faces of a cube, with different colors. */
-  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 0]);
+  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 1]);
 
   gl.uniform1f(shProgram.iTextureAngle, rotAngleRange.value);
 
@@ -355,7 +345,6 @@ function CreateSurfaceData() {
 
   for (let alpha = MIN_ANGLE; alpha <= alphaMax; alpha += STEP_ANGLE) {
     for (let t = MIN_HEIGHT; t <= heightMax; t += STEP_HEIGHT) {
-      // 1
       let x = getX(alpha0, alpha, t, theta, r, c, d);
       let y = getY(alpha0, alpha, t, theta, r, c, d);
       let z = getZ(t, theta, c, d);
@@ -376,20 +365,12 @@ function CreateSurfaceData() {
 
 // Calculate method for x coordinate
 function getX(alpha0, alpha, t, theta, r, c, d) {
-  return (
-    r * cos(alpha) -
-    (r * (alpha0 - alpha) + t * cos(theta) - c * sin(d * t) * sin(theta)) *
-      sin(alpha)
-  );
+  return r * cos(alpha) - (r * (alpha0 - alpha) + t * cos(theta) - c * sin(d * t) * sin(theta)) * sin(alpha);
 }
 
 // Calculate method for y coordinate
 function getY(alpha0, alpha, t, theta, r, c, d) {
-  return (
-    r * sin(alpha) +
-    (r * (alpha0 - alpha) + t * cos(theta) - c * sin(d * t) * sin(theta)) *
-      cos(alpha)
-  );
+  return r * sin(alpha) + (r * (alpha0 - alpha) + t * cos(theta) - c * sin(d * t) * sin(theta)) * cos(alpha);
 }
 
 // Calculate method for z coordinate
@@ -413,10 +394,9 @@ function initGL() {
   shProgram.Use();
 
   shProgram.iAttribVertex = gl.getAttribLocation(prog, "vertex");
-  shProgram.iModelViewProjectionMatrix = gl.getUniformLocation(
-    prog,
-    "ModelViewProjectionMatrix"
-  );
+  shProgram.iModelViewProjectionMatrix = gl.getUniformLocation(prog, "ModelViewProjectionMatrix");
+  shProgram.iModelViewMatrix = gl.getUniformLocation(prog, "ModelViewMatrix");
+  shProgram.iProjectionMatrix = gl.getUniformLocation(prog, "ProjectionMatrix");
   shProgram.iColor = gl.getUniformLocation(prog, "color");
 
   shProgram.iNormal = gl.getAttribLocation(prog, "normal");
@@ -442,10 +422,7 @@ function initGL() {
 
   background = new Model("Back");
   background.BufferData(
-    [
-      0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-      0.0, 0.0, 0.0,
-    ],
+    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
     [1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1]
   );
 
@@ -613,17 +590,14 @@ function init() {
       throw "Browser does not support WebGL";
     }
   } catch (e) {
-    document.getElementById("canvas-holder").innerHTML =
-      "<p>Sorry, could not get a WebGL graphics context.</p>";
+    document.getElementById("canvas-holder").innerHTML = "<p>Sorry, could not get a WebGL graphics context.</p>";
     return;
   }
   try {
     initGL(); // initialize the WebGL graphics context
   } catch (e) {
     document.getElementById("canvas-holder").innerHTML =
-      "<p>Sorry, could not initialize the WebGL graphics context: " +
-      e +
-      "</p>";
+      "<p>Sorry, could not initialize the WebGL graphics context: " + e + "</p>";
     return;
   }
 
@@ -642,12 +616,11 @@ function reDraw() {
 function loadTexture() {
   const image = new Image();
   image.crossOrigin = "anonymous";
-  image.src =
-    "https://www.the3rdsequence.com/texturedb/thumbnail/5/512/dark+wood.jpg";
+  image.src = "https://www.the3rdsequence.com/texturedb/thumbnail/5/512/dark+wood.jpg";
 
   image.addEventListener("load", function () {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    tex1 = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex1);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -784,9 +757,7 @@ function pressArrowRight() {
 
 function pressW() {
   TEXTURE_POINT.y += STEP_TEXTURE_POINT;
-  TEXTURE_POINT.y = +Number(
-    stab(TEXTURE_POINT.y, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)
-  ).toFixed(3);
+  TEXTURE_POINT.y = +Number(stab(TEXTURE_POINT.y, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)).toFixed(3);
   let texturePointYValueSpan = document.getElementById("TexturePointYValue");
   texturePointYValueSpan.innerHTML = TEXTURE_POINT.y;
   reDraw();
@@ -794,9 +765,7 @@ function pressW() {
 
 function pressS() {
   TEXTURE_POINT.y -= STEP_TEXTURE_POINT;
-  TEXTURE_POINT.y = +Number(
-    stab(TEXTURE_POINT.y, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)
-  ).toFixed(3);
+  TEXTURE_POINT.y = +Number(stab(TEXTURE_POINT.y, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)).toFixed(3);
   let texturePointYValueSpan = document.getElementById("TexturePointYValue");
   texturePointYValueSpan.innerHTML = TEXTURE_POINT.y;
   reDraw();
@@ -804,9 +773,7 @@ function pressS() {
 
 function pressA() {
   TEXTURE_POINT.x -= STEP_TEXTURE_POINT;
-  TEXTURE_POINT.x = +Number(
-    stab(TEXTURE_POINT.x, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)
-  ).toFixed(3);
+  TEXTURE_POINT.x = +Number(stab(TEXTURE_POINT.x, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)).toFixed(3);
   let texturePointXValueSpan = document.getElementById("TexturePointXValue");
   texturePointXValueSpan.innerHTML = TEXTURE_POINT.x;
   reDraw();
@@ -814,9 +781,7 @@ function pressA() {
 
 function pressD() {
   TEXTURE_POINT.x += STEP_TEXTURE_POINT;
-  TEXTURE_POINT.x = +Number(
-    stab(TEXTURE_POINT.x, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)
-  ).toFixed(3);
+  TEXTURE_POINT.x = +Number(stab(TEXTURE_POINT.x, MIN_TEXTURE_POINT, MAX_TEXTURE_POINT)).toFixed(3);
   let texturePointXValueSpan = document.getElementById("TexturePointXValue");
   texturePointXValueSpan.innerHTML = TEXTURE_POINT.x;
   reDraw();
