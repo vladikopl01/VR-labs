@@ -20,20 +20,20 @@ let slopeAngleRange;
 // Height range element
 let heightRange;
 // Texture angle
-let rotationAngleRange;
+let rotAngleRange;
 // Texture point x coordinate range
-let texturePointXRange;
+let texPointXRange;
 // Texture point y coordinate range
-let texturePointYRange;
+let texPointYRange;
 
 // Eye separation
-let eyeSeparationRange;
+let eyeSepRange;
 // Field of view
 let fovRange;
 // Near clipping distance
 let nearRange;
 // Convergence
-let convergenceRange;
+let convRange;
 
 let tex;
 let tex1;
@@ -41,6 +41,11 @@ let video;
 let track;
 let background;
 
+// Constant values for zoom range
+const MAX_ZOOM = 50.0;
+const MIN_ZOOM = -100.0;
+const STEP_ZOOM = 1.0;
+const DEFAULT_ZOOM = -80.0;
 // Constant values for slope angle range
 const MAX_SLOPE_ANGLE = 2 * Math.PI;
 const MIN_SLOPE_ANGLE = 0;
@@ -61,6 +66,7 @@ const MAX_HEIGHT = 10;
 const MIN_HEIGHT = 0;
 const STEP_HEIGHT = 0.1;
 const DEFAULT_HEIGHT = 2;
+
 // Constant values of rotation angle for texture range
 const MAX_ROTATION_ANGLE = Math.PI;
 const MIN_ROTATION_ANGLE = -Math.PI;
@@ -73,25 +79,25 @@ const DEFAULT_TEXTURE_POINT = 0.0;
 const STEP_TEXTURE_POINT = 0.005;
 
 // Constant values of eye separation
-const MAX_EYE_SEPARATION = 0.5;
+const MAX_EYE_SEPARATION = 200.0;
 const MIN_EYE_SEPARATION = 0.0;
-const STEP_EYE_SEPARATION = 0.01;
-const DEFAULT_EYE_SEPARATION = 0.0;
+const STEP_EYE_SEPARATION = 1;
+const DEFAULT_EYE_SEPARATION = 70;
 // Constant values of field of view
-const MAX_FOV = 180;
-const MIN_FOV = 0;
-const STEP_FOV = 1;
-const DEFAULT_FOV = 90;
+const MAX_FOV = 3;
+const MIN_FOV = 2;
+const STEP_FOV = 0.05;
+const DEFAULT_FOV = 2.2;
 // Constant values of near clipping distance
-const MAX_NEAR = 10;
+const MAX_NEAR = 20;
 const MIN_NEAR = 0;
-const STEP_NEAR = 0.1;
-const DEFAULT_NEAR = 0.1;
+const STEP_NEAR = 1;
+const DEFAULT_NEAR = 10;
 // Constant values of convergence
-const MAX_CONVERGENCE = 10;
-const MIN_CONVERGENCE = 0;
-const STEP_CONVERGENCE = 0.1;
-const DEFAULT_CONVERGENCE = 0.1;
+const MAX_CONVERGENCE = 3000;
+const MIN_CONVERGENCE = 100;
+const STEP_CONVERGENCE = 50;
+const DEFAULT_CONVERGENCE = 2000;
 
 // Light position value
 let handlePosition = 0.0;
@@ -246,52 +252,24 @@ function draw() {
   let projection = m4.perspective(Math.PI / 10, 1, 1, 1000);
 
   let stereoCamera = {
-    convergence: convergenceRange.value,
-    eyeSeparation: eyeSeparationRange.value,
+    convergence: convRange.value,
+    eyeSeparation: eyeSepRange.value,
     fov: deg2rad(fovRange.value),
     near: nearRange.value,
     aspectRatio: gl.canvas.width / gl.canvas.height,
+    far: 1000,
   };
 
-  let top = stereoCamera.near * Math.tan(stereoCamera.fov / 2);
-  let bottom = -top;
-
-  let a =
-    stereoCamera.aspectRatio *
-    Math.tan(stereoCamera.fov / 2) *
-    stereoCamera.convergence;
-  let b = a - stereoCamera.eyeSeparation / 2;
-  let c = a + stereoCamera.eyeSeparation / 2;
-
-  let left = (-b * stereoCamera.near) / stereoCamera.convergence;
-  let right = (c * stereoCamera.near) / stereoCamera.convergence;
-
-  let leftProjection = m4.frustum(
-    left,
-    right,
-    bottom,
-    top,
-    stereoCamera.near,
-    1000
-  );
-
-  left = (-c * stereoCamera.near) / stereoCamera.convergence;
-  right = (b * stereoCamera.near) / stereoCamera.convergence;
-
-  let rightProjection = m4.frustum(
-    left,
-    right,
-    bottom,
-    top,
-    stereoCamera.near,
-    1000
-  );
+  let leftProjection = leftFrustum(stereoCamera);
+  let rightProjection = rightFrustum(stereoCamera);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
 
   let rotateToPointZero = m4.axisRotation([1, 0, 1], -Math.PI / 3);
   let translateToPointZero = m4.translation(0, 0, zoomRange.value);
+  let translateToLeft = m4.translation(-0.03, 0, -20);
+  let translateToRight = m4.translation(0.03, 0, -20);
 
   let matAccum = m4.multiply(rotateToPointZero, modelView);
   let noRot = m4.multiply(
@@ -322,7 +300,7 @@ function draw() {
   /* Draw the six faces of a cube, with different colors. */
   gl.uniform4fv(shProgram.iColor, [1, 1, 1, 0]);
 
-  gl.uniform1f(shProgram.iTextureAngle, rotationAngleRange.value);
+  gl.uniform1f(shProgram.iTextureAngle, rotAngleRange.value);
 
   const u = TEXTURE_POINT.x;
   const v = TEXTURE_POINT.y;
@@ -516,6 +494,10 @@ function createProgram(gl, vShader, fShader) {
 function init() {
   // Set zoom range
   zoomRange = document.getElementById("ZoomRange");
+  zoomRange.value = DEFAULT_ZOOM;
+  zoomRange.max = MAX_ZOOM;
+  zoomRange.min = MIN_ZOOM;
+  zoomRange.step = STEP_ZOOM;
   let zoomValueSpan = document.getElementById("ZoomValue");
   zoomValueSpan.innerHTML = zoomRange.value;
 
@@ -556,41 +538,40 @@ function init() {
   heightValueSpan.innerHTML = heightRange.value;
 
   // Set rotation angle range
-  rotationAngleRange = document.getElementById("RotationAngleRange");
-  rotationAngleRange.value = DEFAULT_ROTATION_ANGLE;
-  rotationAngleRange.max = MAX_ROTATION_ANGLE;
-  rotationAngleRange.min = MIN_ROTATION_ANGLE;
-  rotationAngleRange.step = STEP_ROTATION_ANGLE;
-  let rotationAngleValueSpan = document.getElementById("RotationAngleValue");
-  rotationAngleValueSpan.innerHTML = rotationAngleRange.value;
+  rotAngleRange = document.getElementById("RotAngleRange");
+  rotAngleRange.value = DEFAULT_ROTATION_ANGLE;
+  rotAngleRange.max = MAX_ROTATION_ANGLE;
+  rotAngleRange.min = MIN_ROTATION_ANGLE;
+  rotAngleRange.step = STEP_ROTATION_ANGLE;
+  let rotAngleValueSpan = document.getElementById("RotAngleValue");
+  rotAngleValueSpan.innerHTML = rotAngleRange.value;
 
   // Set texture point x coordinate
-  texturePointXRange = document.getElementById("TexturePointXRange");
-  texturePointXRange.value = DEFAULT_TEXTURE_POINT;
-  texturePointXRange.max = MAX_TEXTURE_POINT;
-  texturePointXRange.min = MIN_TEXTURE_POINT;
-  texturePointXRange.step = STEP_TEXTURE_POINT;
-  let texturePointXValueSpan = document.getElementById("TexturePointXValue");
-  texturePointXValueSpan.innerHTML = texturePointXRange.value;
+  texPointXRange = document.getElementById("TexPointXRange");
+  texPointXRange.value = DEFAULT_TEXTURE_POINT;
+  texPointXRange.max = MAX_TEXTURE_POINT;
+  texPointXRange.min = MIN_TEXTURE_POINT;
+  texPointXRange.step = STEP_TEXTURE_POINT;
+  let texturePointXValueSpan = document.getElementById("TexPointXValue");
+  texturePointXValueSpan.innerHTML = texPointXRange.value;
 
   // Set rotation angle range
-  texturePointYRange = document.getElementById("TexturePointYRange");
-  texturePointYRange.value = DEFAULT_TEXTURE_POINT;
-  texturePointYRange.max = MAX_TEXTURE_POINT;
-  texturePointYRange.min = MIN_TEXTURE_POINT;
-  texturePointYRange.step = STEP_TEXTURE_POINT;
-  let texturePointYValueSpan = document.getElementById("TexturePointYValue");
-  texturePointYValueSpan.innerHTML = texturePointYRange.value;
+  texPointYRange = document.getElementById("TexPointYRange");
+  texPointYRange.value = DEFAULT_TEXTURE_POINT;
+  texPointYRange.max = MAX_TEXTURE_POINT;
+  texPointYRange.min = MIN_TEXTURE_POINT;
+  texPointYRange.step = STEP_TEXTURE_POINT;
+  let texturePointYValueSpan = document.getElementById("TexPointYValue");
+  texturePointYValueSpan.innerHTML = texPointYRange.value;
 
   // Set eye separation range
-  eyeSeparationRange = document.getElementById("EyeSeparationRange");
-  eyeSeparationRange.value = DEFAULT_EYE_SEPARATION;
-  eyeSeparationRange.max = MAX_EYE_SEPARATION;
-  eyeSeparationRange.min = MIN_EYE_SEPARATION;
-  eyeSeparationRange.step = STEP_EYE_SEPARATION;
-  let eyeSeparationRangeValueSpan =
-    document.getElementById("EyeSeparationValue");
-  eyeSeparationRangeValueSpan.innerHTML = eyeSeparationRange.value;
+  eyeSepRange = document.getElementById("EyeSepRange");
+  eyeSepRange.value = DEFAULT_EYE_SEPARATION;
+  eyeSepRange.max = MAX_EYE_SEPARATION;
+  eyeSepRange.min = MIN_EYE_SEPARATION;
+  eyeSepRange.step = STEP_EYE_SEPARATION;
+  let eyeSeparationRangeValueSpan = document.getElementById("EyeSepValue");
+  eyeSeparationRangeValueSpan.innerHTML = eyeSepRange.value;
 
   // Set field of view range
   fovRange = document.getElementById("FOVRange");
@@ -611,13 +592,13 @@ function init() {
   nearValueSpan.innerHTML = nearRange.value;
 
   // Set convergence range
-  convergenceRange = document.getElementById("ConvergenceRange");
-  convergenceRange.value = DEFAULT_CONVERGENCE;
-  convergenceRange.max = MAX_CONVERGENCE;
-  convergenceRange.min = MIN_CONVERGENCE;
-  convergenceRange.step = STEP_CONVERGENCE;
-  let convergenceValueSpan = document.getElementById("ConvergenceValue");
-  convergenceValueSpan.innerHTML = convergenceRange.value;
+  convRange = document.getElementById("ConvRange");
+  convRange.value = DEFAULT_CONVERGENCE;
+  convRange.max = MAX_CONVERGENCE;
+  convRange.min = MIN_CONVERGENCE;
+  convRange.step = STEP_CONVERGENCE;
+  let convergenceValueSpan = document.getElementById("ConvValue");
+  convergenceValueSpan.innerHTML = convRange.value;
 
   let canvas;
   try {
@@ -710,32 +691,32 @@ function UpdateHeight() {
 }
 
 // Updates texture when rotation angle is changes
-function UpdateRotationAngle() {
-  let rotationAngleValueSpan = document.getElementById("RotationAngleValue");
-  rotationAngleValueSpan.innerHTML = rotationAngleRange.value;
+function UpdateRotAngle() {
+  let rotAngleValueSpan = document.getElementById("RotAngleValue");
+  rotAngleValueSpan.innerHTML = rotAngleRange.value;
   reDraw();
 }
 
 // Updates texture when texture point x coordinate is changes
-function UpdateTexturePointX() {
-  TEXTURE_POINT.x = Number(texturePointXRange.value);
+function UpdateTexPointX() {
+  TEXTURE_POINT.x = Number(texPointXRange.value);
   let texturePointXValueSpan = document.getElementById("TexturePointXValue");
-  texturePointXValueSpan.innerHTML = texturePointXRange.value;
+  texturePointXValueSpan.innerHTML = texPointXRange.value;
   reDraw();
 }
 
 // Updates texture when texture point y coordinate is changes
-function UpdateTexturePointY() {
-  TEXTURE_POINT.y = Number(texturePointYRange.value);
+function UpdateTexPointY() {
+  TEXTURE_POINT.y = Number(texPointYRange.value);
   let texturePointYValueSpan = document.getElementById("TexturePointYValue");
-  texturePointYValueSpan.innerHTML = texturePointYRange.value;
+  texturePointYValueSpan.innerHTML = texPointYRange.value;
   reDraw();
 }
 
 // Updates when eye separation range is changed
-function UpdateEyeSeparation() {
+function UpdateEyeSep() {
   let eyeSeparationValueSpan = document.getElementById("EyeSeparationValue");
-  eyeSeparationValueSpan.innerHTML = eyeSeparationRange.value;
+  eyeSeparationValueSpan.innerHTML = eyeSepRange.value;
   reDraw();
 }
 
@@ -754,9 +735,9 @@ function UpdateNear() {
 }
 
 // Updates when convergence range is changed
-function UpdateConvergence() {
-  let convergenceValueSpan = document.getElementById("ConvergenceValue");
-  convergenceValueSpan.innerHTML = convergenceRange.value;
+function UpdateConv() {
+  let convergenceValueSpan = document.getElementById("ConvValue");
+  convergenceValueSpan.innerHTML = convRange.value;
   reDraw();
 }
 
@@ -842,16 +823,16 @@ function pressD() {
 }
 
 function pressQ() {
-  rotationAngleRange.value -= STEP_ROTATION_ANGLE;
-  let rotationAngleValueSpan = document.getElementById("RotationAngleValue");
-  rotationAngleValueSpan.innerHTML = rotationAngleRange.value;
+  rotAngleRange.value -= STEP_ROTATION_ANGLE;
+  let rotAngleValueSpan = document.getElementById("RotAngleValue");
+  rotAngleValueSpan.innerHTML = rotAngleRange.value;
   reDraw();
 }
 
 function pressE() {
-  rotationAngleRange.value = +rotationAngleRange.value + STEP_ROTATION_ANGLE;
-  let rotationAngleValueSpan = document.getElementById("RotationAngleValue");
-  rotationAngleValueSpan.innerHTML = rotationAngleRange.value;
+  rotAngleRange.value = +rotAngleRange.value + STEP_ROTATION_ANGLE;
+  let rotAngleValueSpan = document.getElementById("RotAngleValue");
+  rotAngleValueSpan.innerHTML = rotAngleRange.value;
   reDraw();
 }
 

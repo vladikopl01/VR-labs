@@ -4,8 +4,6 @@
 
 Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid as Meridian
 
-Texture: rotation around user specified point
-
 ![Check photo as example.png file at /example](/example/example.png)
 
 ![Check gif as example.gif file at /example](/example/example.gif)

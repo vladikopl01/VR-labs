@@ -32,131 +32,76 @@
       >
     </h5>
 
-    <!--ZOOM-->
     <div>
-      <input
-        name="Zoom"
-        type="range"
-        min="-100"
-        max="50"
-        step="1"
-        value="-80"
-        id="ZoomRange"
-        oninput="UpdateZoom()"
-      />
-      <label for="Zoom"
-        >Zoom in/out surface (
-        <span id="ZoomValue"></span>
-        )</label
-      >
-    </div>
+      <span>Surface settings</span>
 
-    <!--ANGLE-->
-    <div>
-      <input
-        name="Angle"
-        type="range"
-        id="AngleRange"
-        oninput="UpdateAngle()"
-      />
-      <label for="Angle"
-        >Angle of surface (
-        <span id="AngleValue"></span>
-        rad )</label
-      >
-    </div>
+      <!--ZOOM-->
+      <div>
+        <input type="range" id="ZoomRange" oninput="UpdateZoom()" />
+        <label for="ZoomRange">Zoom in/out surface</label>
+        (<span id="ZoomValue"></span>)
+      </div>
 
-    <!--RADIUS-->
-    <div>
-      <input
-        name="Radius"
-        type="range"
-        id="RadiusRange"
-        oninput="UpdateRadius()"
-      />
-      <label for="Radius"
-        >Radius of surface (
-        <span id="RadiusValue"></span>
-        )</label
-      >
-    </div>
+      <!--ANGLE-->
+      <div>
+        <input type="range" id="AngleRange" oninput="UpdateAngle()" />
+        <label for="AngleRange">Angle of surface </label>
+        (<span id="AngleValue"></span> rad)
+      </div>
 
-    <!--SLOPEANGLE-->
-    <div>
-      <input
-        name="SlopeAngle"
-        type="range"
-        id="SlopeAngleRange"
-        oninput="UpdateSlopeAngle()"
-      />
-      <label for="SlopeAngle"
-        >Slope angle of surface (
-        <span id="SlopeAngleValue"></span>
-        rad )</label
-      >
-    </div>
+      <!--RADIUS-->
+      <div>
+        <input type="range" id="RadiusRange" oninput="UpdateRadius()" />
+        <label for="RadiusRange">Radius of surface</label>
+        (<span id="RadiusValue"></span>)
+      </div>
 
-    <!--HEIGHT-->
-    <div>
-      <input
-        name="Height"
-        type="range"
-        id="HeightRange"
-        oninput="UpdateHeight()"
-      />
-      <label for="Height"
-        >Height of surface (
-        <span id="HeightValue"></span>
-        )</label
-      >
+      <!--SLOPE_ANGLE-->
+      <div>
+        <input type="range" id="SlopeAngleRange" oninput="UpdateSlopeAngle()" />
+        <label for="SlopeAngleRange">Slope angle of surface</label>
+        (<span id="SlopeAngleValue"></span> rad)
+      </div>
+
+      <!--HEIGHT-->
+      <div>
+        <input type="range" id="HeightRange" oninput="UpdateHeight()" />
+        <label for="HeightRange">Height of surface</label>
+        (<span id="HeightValue"></span>)
+      </div>
     </div>
 
     <!--TEXTURE-->
     <div>
       <span>Texture settings</span>
+
       <!--ROTATION_ANGLE-->
       <div>
-        <input
-          name="RotationAngle"
-          type="range"
-          id="RotationAngleRange"
-          oninput="UpdateRotationAngle()"
-        />
-        <label for="RotationAngle"
-          >Rotation angle (
-          <span id="RotationAngleValue"></span>
-          rad ) (keys Q / E)</label
-        >
+        <input type="range" id="RotAngleRange" oninput="UpdateRotAngle()" />
+        <label for="RotAngleRange">Rotation angle</label>
+        (<span id="RotAngleValue"></span> rad)
+        <span>(keys Q / E)</span>
       </div>
 
       <!--TEXTURE_POINT-->
       <div>
         <span>Point coordinates</span>
-        <br />
 
-        <input
-          name="TexturePointX"
-          type="range"
-          id="TexturePointXRange"
-          oninput="UpdateTexturePointX()"
-        />
-        <label for="RotationAngle"
-          >X coordinate (
-          <span id="TexturePointXValue"></span>
-          ) (keys D / A)</label
-        >
-        <br />
-        <input
-          name="TexturePointY"
-          type="range"
-          id="TexturePointYRange"
-          oninput="UpdateTexturePointY()"
-        />
-        <label for="TexturePointY"
-          >Y coordinate (
-          <span id="TexturePointYValue"></span>
-          ) (keys W / S)</label
-        >
+        <!--TEXTURE_POINT_X-->
+        <div>
+          <input type="range" id="TexPointXRange" oninput="UpdateTexPointX()" />
+          <label for="TexPointXRange">X coordinate</label>
+          (<span id="TexPointXValue"></span>)
+          <span>(keys D / A)</span>
+        </div>
+
+        <!--TEXTURE_POINT_Y-->
+        <div>
+          <input type="range" id="TexPointYRange" oninput="UpdateTexPointY()" />
+          <label for="TexPointYRange">Y coordinate</label>
+          (<span id="TexPointYValue"></span>)
+          <span>(keys W / S)</span>
+        </div>
       </div>
     </div>
 
@@ -166,42 +111,30 @@
 
       <!--EYE_SEPARATION-->
       <div>
-        <input
-          name="EyeSeparation"
-          type="range"
-          id="EyeSeparationRange"
-          oninput="UpdateEyeSeparation()"
-        />
-        <label for="EyeSeparation"
-          >Eye separation (<span id="EyeSeparationValue"></span>)</label
-        >
+        <input type="range" id="EyeSepRange" oninput="UpdateEyeSep()" />
+        <label for="EyeSepRange">Eye separation </label>
+        (<span id="EyeSepValue"></span>)
       </div>
 
       <!--FIELD_OF_VIEW-->
       <div>
-        <input name="FOV" type="range" id="FOVRange" oninput="UpdateFOV()" />
-        <label for="FOV">Field of view (<span id="FOVValue"></span>)</label>
+        <input type="range" id="FOVRange" oninput="UpdateFOV()" />
+        <label for="FOVRange">Field of view</label>
+        (<span id="FOVValue"></span>)
       </div>
 
       <!--NEAR_CLIPPING_DISTANCE-->
       <div>
-        <input name="Near" type="range" id="NearRange" oninput="UpdateNear()" />
-        <label for="Near"
-          >Near clipping distance (<span id="NearValue"></span>)</label
-        >
+        <input type="range" id="NearRange" oninput="UpdateNear()" />
+        <label for="NearRange">Near clipping distance </label>
+        (<span id="NearValue"></span>)
       </div>
 
       <!--CONVERGENCE-->
       <div>
-        <input
-          name="Convergence"
-          type="range"
-          id="ConvergenceRange"
-          oninput="UpdateConvergence()"
-        />
-        <label for="Convergence"
-          >Convergence (<span id="ConvergenceValue"></span>)</label
-        >
+        <input type="range" id="ConvRange" oninput="UpdateConv()" />
+        <label for="ConvRange">Convergence</label>
+        (<span id="ConvValue"></span>)
       </div>
     </div>
 
