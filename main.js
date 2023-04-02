@@ -415,9 +415,7 @@ function createProgram(gl, vShader, fShader) {
   return prog;
 }
 
-/**
- * initialization function that will be called when the page has loaded
- */
+// Initialization function that will be called when the page has loaded
 function init() {
   // Set zoom range
   zoomRange = document.getElementById("ZoomRange");
@@ -628,6 +626,34 @@ function UpdateTexturePointY() {
   TEXTURE_POINT.y = Number(texturePointYRange.value);
   let texturePointYValueSpan = document.getElementById("TexturePointYValue");
   texturePointYValueSpan.innerHTML = texturePointYRange.value;
+  reDraw();
+}
+
+// Updates when eye separation range is changed
+function UpdateEyeSeparation() {
+  let eyeSeparationValueSpan = document.getElementById("EyeSeparationValue");
+  eyeSeparationValueSpan.innerHTML = eyeSeparationRange.value;
+  reDraw();
+}
+
+// Updates when field of view range is changed
+function UpdateFOV() {
+  let fovValueSpan = document.getElementById("FOVValue");
+  fovValueSpan.innerHTML = fovRange.value;
+  reDraw();
+}
+
+// Updates when near clipping distance range is changed
+function UpdateNear() {
+  let nearValueSpan = document.getElementById("NearValue");
+  nearValueSpan.innerHTML = nearRange.value;
+  reDraw();
+}
+
+// Updates when convergence range is changed
+function UpdateConvergence() {
+  let convergenceValueSpan = document.getElementById("ConvergenceValue");
+  convergenceValueSpan.innerHTML = convergenceRange.value;
   reDraw();
 }
 
