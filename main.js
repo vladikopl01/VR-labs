@@ -26,6 +26,21 @@ let texturePointXRange;
 // Texture point y coordinate range
 let texturePointYRange;
 
+// Eye separation
+let eyeSeparation;
+// Field of view
+let fov;
+// Near clipping distance
+let near;
+// Convergence
+let convergence;
+
+// let tex;
+// let tex1;
+// let video;
+// let track;
+// let background;
+
 // Constant values for slope angle range
 const MAX_SLOPE_ANGLE = 2 * Math.PI;
 const MIN_SLOPE_ANGLE = 0;
@@ -56,6 +71,27 @@ const MAX_TEXTURE_POINT = 1.0;
 const MIN_TEXTURE_POINT = -1.0;
 const DEFAULT_TEXTURE_POINT = 0.0;
 const STEP_TEXTURE_POINT = 0.005;
+
+// Constant values of eye separation
+const MAX_EYE_SEPARATION = 0.5;
+const MIN_EYE_SEPARATION = 0.0;
+const STEP_EYE_SEPARATION = 0.01;
+const DEFAULT_EYE_SEPARATION = 0.0;
+// Constant values of field of view
+const MAX_FOV = 180;
+const MIN_FOV = 0;
+const STEP_FOV = 1;
+const DEFAULT_FOV = 90;
+// Constant values of near clipping distance
+const MAX_NEAR = 10;
+const MIN_NEAR = 0;
+const STEP_NEAR = 0.1;
+const DEFAULT_NEAR = 0.1;
+// Constant values of convergence
+const MAX_CONVERGENCE = 10;
+const MIN_CONVERGENCE = 0;
+const STEP_CONVERGENCE = 0.1;
+const DEFAULT_CONVERGENCE = 0.1;
 
 // Light position value
 let handlePosition = 0.0;
@@ -92,12 +128,16 @@ function Model(name) {
   this.iTextureBuffer = gl.createBuffer();
   this.count = 0;
 
-  this.BufferData = function (vertices, textures) {
+  this.BufferData = function (vertices, textureList) {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STREAM_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(textureList),
+      gl.STREAM_DRAW
+    );
 
     gl.enableVertexAttribArray(shProgram.iTextureCoords);
     gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
@@ -113,6 +153,20 @@ function Model(name) {
     gl.vertexAttribPointer(shProgram.iNormal, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iNormal);
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
+    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shProgram.iTextureCoords);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
+  };
+
+  this.DrawBG = function () {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
+    gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shProgram.iAttribVertex);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
+    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shProgram.iTextureCoords);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
   };
 }
@@ -129,37 +183,47 @@ function ShaderProgram(name, program) {
   // Location of the uniform matrix representing the combined transformation.
   this.iModelViewProjectionMatrix = -1;
 
+  // Normals
   this.iNormal = -1;
   this.iNormalMatrix = -1;
 
+  // Ambient, diffuse, specular color
   this.iAmbientColor = -1;
   this.iDiffuseColor = -1;
   this.iSpecularColor = -1;
 
+  // Shininess
   this.iShininess = -1;
-  this.iLightPosition = -1;
+
+  // Light position
+  this.iLightPos = -1;
   this.iLightVec = -1;
 
+  // Texture coordinates
   this.iTextureCoords = -1;
-  this.iTextureU = -1;
-  this.iTextureAngle = -1;
-  this.iTexturePoint = -1;
+  this.iTMU = -1;
+
+  this.iFAngleRad = -1;
+  this.iFUserPoint = -1;
+
+  // this.iTextureAngle = -1;
 
   this.Use = function () {
     gl.useProgram(this.prog);
   };
 }
 
-/* Draws a colored cube, along with a set of coordinate axes.
- * (Note that the use of the above drawPrimitive function is not an efficient
- * way to draw with WebGL.  Here, the geometry is so simple that it doesn't matter.)
- */
 function draw() {
+  let D = document;
+  let spans = D.getElementsByTagName("sliderValue");
+
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   /* Set the values of the projection transformation */
   let projection = m4.perspective(Math.PI / 10, 1, 1, 1000);
+
+  let conv, eyes, ratio, fov;
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
@@ -303,13 +367,13 @@ function initGL() {
 
   shProgram.iShininess = gl.getUniformLocation(prog, "shininess");
 
-  shProgram.iLightPosition = gl.getUniformLocation(prog, "lightPosition");
+  shProgram.iLightPos = gl.getUniformLocation(prog, "lightPosition");
   shProgram.iLightVec = gl.getUniformLocation(prog, "lightVec");
 
   shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
-  shProgram.iTextureU = gl.getUniformLocation(prog, "textureU");
+  shProgram.iTMU = gl.getUniformLocation(prog, "textureU");
   shProgram.iTextureAngle = gl.getUniformLocation(prog, "textureAngle");
-  shProgram.iTexturePoint = gl.getUniformLocation(prog, "texturePoint");
+  shProgram.iTextureCoords = gl.getUniformLocation(prog, "texturePoint");
 
   surface = new Model("Surface");
   const { vertexList, textureList } = CreateSurfaceData();
@@ -422,6 +486,43 @@ function init() {
   texturePointYRange.step = STEP_TEXTURE_POINT;
   let texturePointYValueSpan = document.getElementById("TexturePointYValue");
   texturePointYValueSpan.innerHTML = texturePointYRange.value;
+
+  // Set eye separation range
+  eyeSeparationRange = document.getElementById("EyeSeparationRange");
+  eyeSeparationRange.value = DEFAULT_EYE_SEPARATION;
+  eyeSeparationRange.max = MAX_EYE_SEPARATION;
+  eyeSeparationRange.min = MIN_EYE_SEPARATION;
+  eyeSeparationRange.step = STEP_EYE_SEPARATION;
+  let eyeSeparationRangeValueSpan =
+    document.getElementById("EyeSeparationValue");
+  eyeSeparationRangeValueSpan.innerHTML = eyeSeparationRange.value;
+
+  // Set field of view range
+  fovRange = document.getElementById("FOVRange");
+  fovRange.value = DEFAULT_FOV;
+  fovRange.max = MAX_FOV;
+  fovRange.min = MIN_FOV;
+  fovRange.step = STEP_FOV;
+  let fovValueSpan = document.getElementById("FOVValue");
+  fovValueSpan.innerHTML = fovRange.value;
+
+  // Set near clipping distance range
+  nearRange = document.getElementById("NearRange");
+  nearRange.value = DEFAULT_NEAR;
+  nearRange.max = MAX_NEAR;
+  nearRange.min = MIN_NEAR;
+  nearRange.step = STEP_NEAR;
+  let nearValueSpan = document.getElementById("NearValue");
+  nearValueSpan.innerHTML = nearRange.value;
+
+  // Set convergence range
+  convergenceRange = document.getElementById("ConvergenceRange");
+  convergenceRange.value = DEFAULT_CONVERGENCE;
+  convergenceRange.max = MAX_CONVERGENCE;
+  convergenceRange.min = MIN_CONVERGENCE;
+  convergenceRange.step = STEP_CONVERGENCE;
+  let convergenceValueSpan = document.getElementById("ConvergenceValue");
+  convergenceValueSpan.innerHTML = convergenceRange.value;
 
   let canvas;
   try {

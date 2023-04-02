@@ -160,6 +160,51 @@
       </div>
     </div>
 
+    <!--STEREO_CAMERA-->
+    <div>
+      <span>Stereo camera settings</span>
+
+      <!--EYE_SEPARATION-->
+      <div>
+        <input
+          name="EyeSeparation"
+          type="range"
+          id="EyeSeparationRange"
+          oninput="UpdateEyeSeparation()"
+        />
+        <label for="EyeSeparation"
+          >Eye separation (<span id="EyeSeparationValue"></span>)</label
+        >
+      </div>
+
+      <!--FIELD_OF_VIEW-->
+      <div>
+        <input name="FOV" type="range" id="FOVRange" oninput="UpdateFOV()" />
+        <label for="FOV">Field of view (<span id="FOVValue"></span>)</label>
+      </div>
+
+      <!--NEAR_CLIPPING_DISTANCE-->
+      <div>
+        <input name="Near" type="range" id="NearRange" oninput="UpdateNear()" />
+        <label for="Near"
+          >Near clipping distance (<span id="NeaeValue"></span>)</label
+        >
+      </div>
+
+      <!--CONVERGENCE-->
+      <div>
+        <input
+          name="Convergence"
+          type="range"
+          id="ConvergenceRange"
+          oninput="UpdateConvergence()"
+        />
+        <label for="Convergence"
+          >Convergence (<span id="ConvergenceValue"></span>)</label
+        >
+      </div>
+    </div>
+
     <p id="message">Drag your mouse on the surface to rotate it</p>
 
     <div
