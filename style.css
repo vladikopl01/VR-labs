@@ -12,3 +12,40 @@ body {
   justify-content: space-around;
   align-items: flex-start;
 }
+
+#app {
+  min-width: 600px;
+}
+
+#controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid black;
+  border-radius: 10px;
+}
+
+#controls > div {
+  padding: 0.5rem 0.5rem 0.25rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.title-wrapper {
+  display: flex;
+  justify-content: space-between;
+}
+
+.slider-value {
+  font-weight: bold;
+}
+
+.webcam-wrapper {
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

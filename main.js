@@ -153,11 +153,13 @@ function initGL() {
     [1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1]
   );
 
-  LoadImage();
+  LoadTexture();
   gl.enable(gl.DEPTH_TEST);
 }
 
 function infiniteDraw() {
+  const { vertexList, textureList } = CreateSurfaceData();
+  surface.BufferData(vertexList, textureList);
   draw();
   window.requestAnimationFrame(infiniteDraw);
 }
