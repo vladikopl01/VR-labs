@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
-    <title>PA1</title>
-    <style>
-      body {
-        background-color: #eeeeee;
-      }
-    </style>
-
-    <script src="./Utils/trackball-rotator.js"></script>
-    <script src="./Utils/m4.js"></script>
-    <script src="./shader.gpu"></script>
-    <script src="./main.js"></script>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>VR PA1</title>
   </head>
-  <body onload="init()">
-    <h3>Practical assignment #1 (WebGL stereo camera)</h3>
-    <h5>Author: Vladyslav Kotsiuba TR-21mp</h5>
-    <h5>Surface: Monge Surface with a Cylyndrical Directrix Surface and with a Sinusoid as Meridian</h5>
-    <h5>
-      Github implementation
-      <a href="https://github.com/vladikopl01/VR-labs/tree/PA1" target="_blank" rel="noopener noreferrer">link</a>
-    </h5>
+  <body>
+    <div id="app">
+      <h2>Practical assignment #1 (WebGL stereo camera)</h2>
+      <h3>Author: Vladyslav Kotsiuba TR-21mp</h3>
+      <h3>Surface: Monge Surface with a Cylyndrical Directrix Surface and with a Sinusoid as Meridian</h3>
+      <h5>
+        Github implementation
+        <a href="https://github.com/vladikopl01/VR-labs/tree/PA1" target="_blank" rel="noopener noreferrer">link</a>
+      </h5>
+
+      <div id="controls"></div>
+      <div class="webcam-wrapper">
+        <label for="webcam">Webcam enabled</label>
+        <input id="webcam" type="checkbox" />
+      </div>
+    </div>
+
+    <div id="canvas-holder">
+      <canvas height="600" id="webglcanvas" width="600"></canvas>
+    </div>
+
+    <script src="main.js" type="module"></script>
 
     <div>
       <span>Surface settings</span>
@@ -128,12 +132,6 @@
         <label for="ConvRange">Convergence</label>
         (<span id="ConvValue"></span>)
       </div>
-    </div>
-
-    <p id="message">Drag your mouse on the surface to rotate it</p>
-
-    <div id="canvas-holder" style="display: flex; flex-direction: row; justify-content: center; align-items: center">
-      <canvas width="800" height="800" id="webglcanvas"></canvas>
     </div>
   </body>
 </html>
