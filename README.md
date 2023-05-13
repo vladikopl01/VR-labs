@@ -4,9 +4,9 @@
 
 Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid as Meridian
 
-![Check photo as example.png file at /example](/example/example.png)
+![Check gif as video.gif file at /media](/media/video.gif)
 
-![Check gif as example.gif file at /example](/example/example.gif)
+![Check photo as photo.png file at /media](/media/photo.png)
 
 ## Assignment presentation
 

@@ -48,7 +48,7 @@ export const controls = [
     id: "fov",
     label: "Field of View",
     min: 0,
-    max: 5,
+    max: 3,
     step: 0.01,
     value: 2.5,
     elementRef: null,
