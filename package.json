@@ -1,0 +1,14 @@
+{
+  "name": "vr-labs",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^4.3.5",
+    "vite-plugin-glsl": "^1.1.2"
+  }
+}

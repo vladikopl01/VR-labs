@@ -1,133 +1,24 @@
-"use strict";
+import { getValueById, renderControls } from "./controls.js";
+import fragmentShaderSource from "./shaders/fragmentShader.glsl";
+import vertexShaderSource from "./shaders/vertexShader.glsl";
+import "./style.css";
+import "./utils/m4.js";
+import { TrackballRotator } from "./utils/trackball-rotator.js";
+import { createWebcamTexture, getWebcamEnabled, handleWebcam } from "./webcam.js";
 
-// The webgl context
-let gl;
-// A surface model
-let surface;
-// A shader program
-let shProgram;
-// A SimpleRotator object that lets the user rotate the view by mouse
-let spaceball;
+getValueById;
+renderControls;
+createWebcamTexture;
+getWebcamEnabled;
+handleWebcam;
 
-// Zoom range element
-let zoomRange;
-// Angle range element
-let angleRange;
-// Radius range element
-let radiusRange;
-// Slope angle range element
-let slopeAngleRange;
-// Height range element
-let heightRange;
-// Texture angle
-let rotAngleRange;
-// Texture point x coordinate range
-let texPointXRange;
-// Texture point y coordinate range
-let texPointYRange;
-
-// Eye separation
-let eyeSepRange;
-// Field of view
-let fovRange;
-// Near clipping distance
-let nearRange;
-// Convergence
-let convRange;
-
-let stereoCamera;
-
-let tex;
-let tex1;
-let video;
-let track;
-let background;
-
-// Constant values for zoom range
-const MAX_ZOOM = 50.0;
-const MIN_ZOOM = -100.0;
-const STEP_ZOOM = 1.0;
-const DEFAULT_ZOOM = -80.0;
-// Constant values for slope angle range
-const MAX_SLOPE_ANGLE = 2 * Math.PI;
-const MIN_SLOPE_ANGLE = 0;
-const STEP_SLOPE_ANGLE = Math.PI / 10;
-const DEFAULT_SLOPE_ANGLE = Math.PI / 2;
-// Constant values for radius range
-const MAX_RADIUS = 5;
-const MIN_RADIUS = 0;
-const STEP_RADIUS = 0.5;
-const DEFAULT_RADIUS = 1;
-// Constant values of extension angle range
-const MAX_ANGLE = 8 * Math.PI;
-const MIN_ANGLE = 0;
-const STEP_ANGLE = Math.PI / 50;
-const DEFAULT_ANGLE = 4 * Math.PI;
-// Constant values of height range
-const MAX_HEIGHT = 10;
-const MIN_HEIGHT = 0;
-const STEP_HEIGHT = 0.1;
-const DEFAULT_HEIGHT = 2;
-
-// Constant values of rotation angle for texture range
-const MAX_ROTATION_ANGLE = Math.PI;
-const MIN_ROTATION_ANGLE = -Math.PI;
-const STEP_ROTATION_ANGLE = Math.PI / 50;
-const DEFAULT_ROTATION_ANGLE = 0.0;
-// Constant values of texture point
-const MAX_TEXTURE_POINT = 1.0;
-const MIN_TEXTURE_POINT = -1.0;
-const DEFAULT_TEXTURE_POINT = 0.0;
-const STEP_TEXTURE_POINT = 0.005;
-
-// Constant values of eye separation
-const MAX_EYE_SEPARATION = 200.0;
-const MIN_EYE_SEPARATION = 0.0;
-const STEP_EYE_SEPARATION = 1;
-const DEFAULT_EYE_SEPARATION = 70;
-// Constant values of field of view
-const MAX_FOV = 100;
-const MIN_FOV = -100;
-const STEP_FOV = 1;
-const DEFAULT_FOV = 10;
-// Constant values of near clipping distance
-const MAX_NEAR = 20;
-const MIN_NEAR = 0;
-const STEP_NEAR = 1;
-const DEFAULT_NEAR = 10;
-// Constant values of convergence
-const MAX_CONVERGENCE = 3000;
-const MIN_CONVERGENCE = 100;
-const STEP_CONVERGENCE = 50;
-const DEFAULT_CONVERGENCE = 2000;
-
-// Light position value
-let handlePosition = 0.0;
-
-// First user point coordinates on surface
-const TEXTURE_POINT = { x: DEFAULT_TEXTURE_POINT, y: DEFAULT_TEXTURE_POINT };
-
-function deg2rad(angle) {
-  return (angle * Math.PI) / 180;
-}
-
-function cos(x) {
-  return Math.cos(x);
-}
-
-function sin(x) {
-  return Math.sin(x);
-}
-
-function stab(x, min, max) {
-  if (x < min) {
-    return min;
-  }
-  if (x > max) {
-    return max;
-  }
-  return x;
-}
+let gl; // The webgl context
+let surface; // A surface model
+let background; // A background model
+let shProgram; // A shader program
+let spaceball; // A SimpleRotator object that lets the user rotate the view by mouse
+let texture, webcamTexture; // A textures
+let video; // A video element
 
 // Constructor of the Model
 function Model(name) {
@@ -149,32 +40,14 @@ function Model(name) {
     this.count = vertices.length / 3;
   };
 
-  // this.Draw = function () {
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
-  //   gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
-  //   gl.enableVertexAttribArray(shProgram.iAttribVertex);
-
-  //   gl.vertexAttribPointer(shProgram.iNormal, 3, gl.FLOAT, false, 0, 0);
-  //   gl.enableVertexAttribArray(shProgram.iNormal);
-
-  //   gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
-  // };
-
   this.Draw = function () {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
     gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iAttribVertex);
 
-    gl.vertexAttribPointer(shProgram.iNormal, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iNormal);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
-  };
-
-  this.DrawBG = function () {
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
-    gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(shProgram.iAttribVertex);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
+    gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shProgram.iTextureCoords);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
   };
@@ -874,4 +747,32 @@ function CreateWebCamTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return textureID;
+}
+
+// Light position value
+let handlePosition = 0.0;
+
+// First user point coordinates on surface
+const TEXTURE_POINT = { x: DEFAULT_TEXTURE_POINT, y: DEFAULT_TEXTURE_POINT };
+
+function deg2rad(angle) {
+  return (angle * Math.PI) / 180;
+}
+
+function cos(x) {
+  return Math.cos(x);
+}
+
+function sin(x) {
+  return Math.sin(x);
+}
+
+function stab(x, min, max) {
+  if (x < min) {
+    return min;
+  }
+  if (x > max) {
+    return max;
+  }
+  return x;
 }
