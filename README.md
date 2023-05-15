@@ -1,8 +1,10 @@
-# WebGL stereo camera
+# Tangible interface
 
 ## Example
 
 Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid as Meridian
+
+TUI: Surface rotation based on software orientation sensor readings
 
 ![Check gif as video.gif file at /media](/media/video.gif)
 
@@ -10,22 +12,11 @@ Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid 
 
 ## Assignment presentation
 
-- Share the link to your [GIThub repo through this form](https://docs.google.com/forms/d/e/1FAIpQLSerrWyQJ3o7jnl24gI7dtnYtCqPE1xh0eAAQnqcwZXydrt9MQ/viewform).
-- The practical assignment has to reside in a branch named PA1.
-- Make sure the repo contains several screenshots presenting your assignment and a photo of yourself wearing anaglyph glasses (without this photo the assignment is treated as unsuccessful).
+- Share the link to your [GIThub repo through this form](https://docs.google.com/forms/d/e/1FAIpQLSdolIBsxPtexmWHAmL-fZyvBt3bG_Y3aOtMkmTAMyb_wO3juQ/viewform).
+- The practical assignment has to reside in a branch named PA2.
+- Make sure the repo contains a video demonstrating you operating smartphone as a tangible interface.
 
 ## Requirements
 
-- You need to develop the software delivering anaglyph stereo image of a model.
-- Use the surface from Visualization of graphic data and geometric information credit module.
-- Make sure the surface has some visual details (e.g. wireframe + filled polygons) or a texture on top.
-
-The surface has to be rendered in negative parallax while the video from the camera in zero parallax.
-
-It has to be possible:
-
-- to rotate the model around its center of mass using a mouse.
-- to change Eye separation parameter
-- to change Field of View
-- to change Near Clipping distance
-- to change Convergence distance
+- A person wants to use the phone as a tangible device. Develop the application that renders the surface on the screen and performs surface rotation mimicking smart phone orientation in space.
+- As a laptop/pc does not usually has orientation sensors on board it is suggested to deploy a server (e.g. using node.js Express or a web based server) to deliver your pages to a smartphone.
