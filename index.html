@@ -2,28 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>VR PA1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>VR PA2</title>
   </head>
   <body>
     <div id="app">
-      <h2>Practical assignment #1 (WebGL stereo camera)</h2>
+      <h2>Practical assignment #2 (Tangible interface)</h2>
       <h3>Author: Vladyslav Kotsiuba TR-21mp</h3>
       <h3>Surface: Monge Surface with a Cylyndrical Directrix Surface and with a Sinusoid as Meridian</h3>
+      <h3>TUI: surface rotation based on software orientation sensor readings</h3>
       <h5>
         Github implementation
         <a href="https://github.com/vladikopl01/VR-labs/tree/PA1" target="_blank" rel="noopener noreferrer">link</a>
       </h5>
 
       <div id="controls"></div>
+
       <div class="webcam-wrapper">
         <label for="webcam">Webcam enabled</label>
         <input id="webcam" type="checkbox" />
       </div>
+
+      <div class="device-orientation-wrapper">
+        <label for="device-orientation">Device orientation</label>
+        <input id="device-orientation" type="checkbox" />
+        <button id="request-orientation">Request orientation</button>
+        <mark>Only IOS compatibility</mark>
+      </div>
     </div>
 
     <div id="canvas-holder">
-      <canvas height="600" id="webglcanvas" width="600"></canvas>
+      <canvas id="webglcanvas" height="600" width="600"></canvas>
     </div>
 
     <script src="main.js" type="module"></script>
