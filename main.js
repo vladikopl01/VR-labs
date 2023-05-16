@@ -1,7 +1,9 @@
 import fragmentShaderSource from "./shaders/fragmentShader.glsl";
 import vertexShaderSource from "./shaders/vertexShader.glsl";
 import { getValueById, renderControls } from "./src/controls.js";
+import { handleRequestButton, latestEvent } from "./src/deviceOrientation.js";
 import { CreateSurfaceData } from "./src/surface.js";
+import { LoadTexture } from "./src/texture.js";
 import { createWebcamTexture, getWebcamEnabled, handleWebcam } from "./src/webcam.js";
 import "./style.css";
 import "./utils/m4.js";
@@ -14,6 +16,7 @@ let shProgram; // A shader program
 let spaceball; // A SimpleRotator object that lets the user rotate the view by mouse
 let texture, webcamTexture; // A textures
 let video; // A video element
+let deviceOrientation; // A device orientation state
 
 // Constructor of the Model
 function Model(name) {
@@ -92,12 +95,24 @@ function draw() {
   right = (b * nearClippingDistance) / convergenceDistance;
   const projectionRight = m4.orthographic(left, right, bottom, top, nearClippingDistance, far);
 
-  const modelView = spaceball.getViewMatrix();
+  let modelView;
+  if (deviceOrientation.checked && latestEvent.alpha && latestEvent.beta && latestEvent.gamma) {
+    const alphaRad = (latestEvent.alpha * Math.PI) / 180;
+    const betaRad = (latestEvent.beta * Math.PI) / 180;
+    const gammaRad = (latestEvent.gamma * Math.PI) / 180;
+    const rotZ = m4.axisRotation([0, 0, 1], alphaRad);
+    const rotX = m4.axisRotation([1, 0, 0], -betaRad);
+    const rotY = m4.axisRotation([0, 1, 0], gammaRad);
+    const rotation = m4.multiply(m4.multiply(rotX, rotY), rotZ);
+    const translation = m4.translation(0, 0, -2);
+    modelView = m4.multiply(rotation, translation);
+  } else {
+    modelView = spaceball.getViewMatrix();
+  }
+
   const rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
   const translateToLeft = m4.translation(-0.01, 0, -20);
   const translateToRight = m4.translation(0.01, 0, -20);
-
-  const matrixMultiplied = m4.multiply(rotateToPointZero, modelView);
 
   if (getWebcamEnabled()) {
     const projection = m4.orthographic(0, 1, 0, 1, -1, 1);
@@ -112,7 +127,7 @@ function draw() {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.clear(gl.DEPTH_BUFFER_BIT);
 
-  const matrixLeft = m4.multiply(translateToLeft, matrixMultiplied);
+  const matrixLeft = m4.multiply(translateToLeft, modelView);
   gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matrixLeft);
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionLeft);
   gl.colorMask(true, false, false, false);
@@ -120,7 +135,7 @@ function draw() {
 
   gl.clear(gl.DEPTH_BUFFER_BIT);
 
-  const matrixRight = m4.multiply(translateToRight, matrixMultiplied);
+  const matrixRight = m4.multiply(translateToRight, modelView);
   gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matrixRight);
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionRight);
   gl.colorMask(false, true, true, false);
@@ -205,8 +220,11 @@ async function init() {
     gl = canvas.getContext("webgl");
     video = document.createElement("video");
     video.setAttribute("autoplay", "true");
+    deviceOrientation = document.getElementById("device-orientation");
     webcamTexture = createWebcamTexture(gl);
+
     handleWebcam(video);
+    handleRequestButton();
     if (!gl) {
       throw "Browser does not support WebGL";
     }
@@ -225,26 +243,6 @@ async function init() {
   spaceball = new TrackballRotator(canvas, draw, 0);
 
   infiniteDraw();
-}
-
-async function LoadImage() {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.src = "./assets/texture.png";
-    image.crossOrigin = "anonymous";
-    image.addEventListener("load", function () {
-      resolve(image);
-    });
-  });
-}
-
-async function LoadTexture() {
-  const image = await LoadImage();
-  texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 }
 
 document.addEventListener("DOMContentLoaded", init);

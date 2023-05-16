@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;
@@ -7,6 +11,7 @@ body {
 body {
   background-color: #e8e9eb;
   margin: 0;
+  padding: 1rem;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -14,15 +19,44 @@ body {
 }
 
 #app {
+  max-width: 50%;
+  margin: 0 auto;
   min-width: 600px;
+}
+
+#canvas-holder {
+  margin: 0 auto;
   max-width: 600px;
+}
+
+@media (max-width: 768px) {
+  body {
+    background-color: #e8e9eb;
+    margin: 0;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  #app {
+    width: 100%;
+    min-width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  #webglcanvas {
+    width: 100%;
+    aspect-ratio: 1;
+  }
 }
 
 #controls {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  border: 1px solid black;
+  border: 1px solid darkgray;
   border-radius: 10px;
 }
 
@@ -41,8 +75,9 @@ body {
   font-weight: bold;
 }
 
-.webcam-wrapper {
-  border: 1px solid black;
+.webcam-wrapper,
+.device-orientation-wrapper {
+  border: 1px solid darkgrey;
   border-radius: 10px;
   padding: 0.5rem;
   display: flex;
