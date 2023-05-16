@@ -48,6 +48,7 @@ export async function handleDeviceOrientation() {
 export function handleRequestButton() {
   const button = document.getElementById("request-orientation");
   button.addEventListener("click", () => {
+    console.log("Requesting device orientation permission");
     handleDeviceOrientation();
   });
 }

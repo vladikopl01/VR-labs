@@ -3,7 +3,6 @@ import vertexShaderSource from "./shaders/vertexShader.glsl";
 import { getValueById, renderControls } from "./src/controls.js";
 import { handleRequestButton, latestEvent } from "./src/deviceOrientation.js";
 import { CreateSurfaceData } from "./src/surface.js";
-import { LoadTexture } from "./src/texture.js";
 import { createWebcamTexture, getWebcamEnabled, handleWebcam } from "./src/webcam.js";
 import "./style.css";
 import "./utils/m4.js";
@@ -243,6 +242,26 @@ async function init() {
   spaceball = new TrackballRotator(canvas, draw, 0);
 
   infiniteDraw();
+}
+
+async function LoadImage() {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.src = "../assets/texture.png";
+    image.crossOrigin = "anonymous";
+    image.addEventListener("load", function () {
+      resolve(image);
+    });
+  });
+}
+
+export async function LoadTexture() {
+  const image = await LoadImage();
+  texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 }
 
 document.addEventListener("DOMContentLoaded", init);

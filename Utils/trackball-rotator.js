@@ -41,7 +41,6 @@
  */
 
 var touchStarted = false;
-
 export function TrackballRotator(canvas, callback, viewDistance, viewpointDirection, viewUp) {
   var unitx = new Array(3);
   var unity = new Array(3);
