@@ -8,8 +8,6 @@ TUI: Surface rotation based on software orientation sensor readings
 
 ![Check gif as video.gif file at /media](/media/video.gif)
 
-![Check photo as photo.png file at /media](/media/photo.png)
-
 ## Assignment presentation
 
 - Share the link to your [GIThub repo through this form](https://docs.google.com/forms/d/e/1FAIpQLSdolIBsxPtexmWHAmL-fZyvBt3bG_Y3aOtMkmTAMyb_wO3juQ/viewform).
