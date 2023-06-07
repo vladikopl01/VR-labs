@@ -1,5 +1,6 @@
 import fragmentShaderSource from "./shaders/fragmentShader.glsl";
 import vertexShaderSource from "./shaders/vertexShader.glsl";
+import { handleAudioButton } from "./src/audio";
 import { getValueById, renderControls } from "./src/controls.js";
 import { handleRequestButton, latestEvent } from "./src/deviceOrientation.js";
 import { CreateSurfaceData } from "./src/surface.js";
@@ -16,6 +17,17 @@ let spaceball; // A SimpleRotator object that lets the user rotate the view by m
 let texture, webcamTexture; // A textures
 let video; // A video element
 let deviceOrientation; // A device orientation state
+
+let audio; // An audio element
+let panner; // A panner node
+
+let sphere; // A sphere model
+let sphereStep = 0;
+let sphereCoords = [0, 0, 0];
+
+function degToRad(degrees) {
+  return (degrees * Math.PI) / 180;
+}
 
 // Constructor of the Model
 function Model(name) {
@@ -48,6 +60,11 @@ function Model(name) {
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
   };
+
+  this.DrawSphere = function () {
+    this.Draw();
+    gl.drawArrays(gl.LINE_STRIP, 0, this.count);
+  };
 }
 
 // Constructor of the Shader
@@ -68,7 +85,7 @@ function ShaderProgram(name, program) {
 }
 
 function draw() {
-  gl.clearColor(0, 0, 0, 1);
+  gl.clearColor(1, 1, 1, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   const eyeSeparation = getValueById("eyeSeparation");
@@ -97,17 +114,12 @@ function draw() {
   let modelView;
   if (deviceOrientation.checked && latestEvent.alpha && latestEvent.beta && latestEvent.gamma) {
     const alphaRad = (latestEvent.alpha * Math.PI) / 180;
-    const betaRad = (latestEvent.beta * Math.PI) / 180;
-    const gammaRad = (latestEvent.gamma * Math.PI) / 180;
-    const rotZ = m4.axisRotation([0, 0, 1], alphaRad);
-    const rotX = m4.axisRotation([1, 0, 0], -betaRad);
-    const rotY = m4.axisRotation([0, 1, 0], gammaRad);
-    const rotation = m4.multiply(m4.multiply(rotX, rotY), rotZ);
-    const translation = m4.translation(0, 0, -2);
-    modelView = m4.multiply(rotation, translation);
+    moveSphere(alphaRad + Math.PI / 2);
   } else {
-    modelView = spaceball.getViewMatrix();
+    step += 0.02;
+    moveSphere(step);
   }
+  modelView = spaceball.getViewMatrix();
 
   const rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
   const translateToLeft = m4.translation(-0.01, 0, -20);
@@ -122,6 +134,15 @@ function draw() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
     background.Draw();
   }
+
+  panner?.setPosition(...sphereCoords);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  const projection = m4.perspective(degToRad(90), 1, 0.1, 100);
+  const translationShere = m4.translation(...sphereCoords);
+  const modelViewMatrix = m4.multiply(translationShere, modelView);
+  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projection);
+  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, modelViewMatrix);
+  sphere.DrawSphere();
 
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -166,6 +187,10 @@ function initGL() {
     [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
     [1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1]
   );
+
+  const sphereData = CreateSphereData(0.5, 500, 500);
+  sphere = new Model("Sphere");
+  sphere.BufferData(sphereData.vertexList, sphereData.textureList);
 
   LoadTexture();
   gl.enable(gl.DEPTH_TEST);
@@ -224,6 +249,8 @@ async function init() {
 
     handleWebcam(video);
     handleRequestButton();
+
+    handleAudioButton();
     if (!gl) {
       throw "Browser does not support WebGL";
     }

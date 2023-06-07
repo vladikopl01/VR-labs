@@ -46,3 +46,11 @@ export async function loadAudio(fileName) {
 
   return [sound, panner];
 }
+
+export function handleAudioButton() {
+  const button = document.getElementById("audio");
+
+  button.addEventListener("click", async function (e) {
+    [audio, panner] = await loadAudio("assets/rose_golden.mp3").catch(console.error);
+  });
+}
