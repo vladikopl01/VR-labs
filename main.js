@@ -1,6 +1,6 @@
 import fragmentShaderSource from "./shaders/fragmentShader.glsl";
 import vertexShaderSource from "./shaders/vertexShader.glsl";
-import { handleAudioSlider, handleFilterChange } from "./src/audio";
+import { handleAudioSlider, handleFilterChange, panner } from "./src/audio";
 import { getValueById, renderControls } from "./src/controls.js";
 import { handleRequestButton, latestEvent } from "./src/deviceOrientation.js";
 import { CreateSphereData, moveSphere } from "./src/sphere";
@@ -18,9 +18,6 @@ let spaceball; // A SimpleRotator object that lets the user rotate the view by m
 let texture, webcamTexture; // A textures
 let video; // A video element
 let deviceOrientation; // A device orientation state
-
-let audio; // An audio element
-let panner; // A panner node
 
 let sphere; // A sphere model
 let sphereStep = 0;
@@ -191,8 +188,8 @@ function initGL() {
     [1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1]
   );
 
-  const sphereData = CreateSphereData(0.5, 500, 500);
   sphere = new Model("Sphere");
+  const sphereData = CreateSphereData(0.5, 500, 500);
   sphere.BufferData(sphereData.vertexList, sphereData.textureList);
 
   LoadTexture();
