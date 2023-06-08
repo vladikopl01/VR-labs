@@ -1,4 +1,4 @@
-# Tangible interface
+# Spatial audio
 
 ## Example
 
