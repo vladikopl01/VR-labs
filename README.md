@@ -6,10 +6,7 @@ Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid 
 
 Filter: Low-pass filter
 
-<video src="/media/video.mov" controls="controls" style="max-width: 730px;">
-</video>
-
-<!-- ![Check gif as video.mp4 file at /media](media/video.mp4) -->
+https://github.com/vladikopl01/VR-labs/assets/56199219/d9a01490-4ba1-45cb-a2b9-cf823a847296
 
 > Downloading could take time. If there is not a any video, please, check the video at [/media/video.mp4](/media/video.mp4)
 
