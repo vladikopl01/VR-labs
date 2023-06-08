@@ -6,9 +6,11 @@ Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid 
 
 Filter: Low-pass filter
 
-![Check gif as video.gif file at /media](/media/video.gif)
+<video src='/media/video.mp4'></video>
 
-> Downloading could take time. If there is not a any video, please, check the video at [/media/video.gif](/media/video.gif)
+<!-- ![Check gif as video.mp4 file at /media](media/video.mp4) -->
+
+> Downloading could take time. If there is not a any video, please, check the video at [/media/video.mp4](/media/video.mp4)
 
 ## Assignment presentation
 
