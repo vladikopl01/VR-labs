@@ -76,7 +76,8 @@ body {
 }
 
 .webcam-wrapper,
-.device-orientation-wrapper {
+.device-orientation-wrapper,
+.audio-wrapper {
   border: 1px solid darkgrey;
   border-radius: 10px;
   padding: 0.5rem;

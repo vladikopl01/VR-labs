@@ -1,8 +1,9 @@
 import fragmentShaderSource from "./shaders/fragmentShader.glsl";
 import vertexShaderSource from "./shaders/vertexShader.glsl";
-import { handleAudioButton } from "./src/audio";
+import { handleAudioSlider, handleFilterChange } from "./src/audio";
 import { getValueById, renderControls } from "./src/controls.js";
 import { handleRequestButton, latestEvent } from "./src/deviceOrientation.js";
+import { CreateSphereData, moveSphere } from "./src/sphere";
 import { CreateSurfaceData } from "./src/surface.js";
 import { createWebcamTexture, getWebcamEnabled, handleWebcam } from "./src/webcam.js";
 import "./style.css";
@@ -114,10 +115,10 @@ function draw() {
   let modelView;
   if (deviceOrientation.checked && latestEvent.alpha && latestEvent.beta && latestEvent.gamma) {
     const alphaRad = (latestEvent.alpha * Math.PI) / 180;
-    moveSphere(alphaRad + Math.PI / 2);
+    sphereCoords = moveSphere(sphereCoords, alphaRad + Math.PI / 2);
   } else {
-    step += 0.02;
-    moveSphere(step);
+    sphereStep += 0.015;
+    sphereCoords = moveSphere(sphereCoords, sphereStep);
   }
   modelView = spaceball.getViewMatrix();
 
@@ -137,9 +138,11 @@ function draw() {
 
   panner?.setPosition(...sphereCoords);
   gl.bindTexture(gl.TEXTURE_2D, null);
+
   const projection = m4.perspective(degToRad(90), 1, 0.1, 100);
   const translationShere = m4.translation(...sphereCoords);
   const modelViewMatrix = m4.multiply(translationShere, modelView);
+
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projection);
   gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, modelViewMatrix);
   sphere.DrawSphere();
@@ -203,14 +206,7 @@ function infiniteDraw() {
   window.requestAnimationFrame(infiniteDraw);
 }
 
-/* Creates a program for use in the WebGL context gl, and returns the
- * identifier for that program.  If an error occurs while compiling or
- * linking the program, an exception of type Error is thrown.  The error
- * string contains the compilation or linking error.  If no error occurs,
- * the program identifier is the return value of the function.
- * The second and third parameters are strings that contain the
- * source code for the vertex shader and for the fragment shader.
- */
+// Create a program with the source text given by shader
 function createProgram(gl, vShader, fShader) {
   let vsh = gl.createShader(gl.VERTEX_SHADER);
   gl.shaderSource(vsh, vShader);
@@ -250,7 +246,8 @@ async function init() {
     handleWebcam(video);
     handleRequestButton();
 
-    handleAudioButton();
+    handleAudioSlider();
+    handleFilterChange();
     if (!gl) {
       throw "Browser does not support WebGL";
     }
