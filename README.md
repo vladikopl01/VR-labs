@@ -6,7 +6,8 @@ Surface: Monge Surface with a Cylindrical Directrix Surface and with a Sinusoid 
 
 Filter: Low-pass filter
 
-<video src='/media/video.mp4'></video>
+<video src="/media/video.mp4" controls="controls" style="max-width: 730px;">
+</video>
 
 <!-- ![Check gif as video.mp4 file at /media](media/video.mp4) -->
 
